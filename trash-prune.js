@@ -94,7 +94,7 @@ const option = yargs(hideBin(process.argv))
   .example([
     ["trash-prune -n 100", "Delete 100 files"],
     ["trash-prune -kg 1", "Keep 1 GB and delete the rest"],
-    ["trash-prune --rot 0.01:sh,txt 100:htm,html,log", "set rotting multiplier for specific extensions. You can set as many multipliers as you want, separating them with a space. Use `--` to end the list if you want to specify other options after this."]
+    ["trash-prune --rot 0.01:sh,txt 100:htm,html,log", "Set rotting multiplier for specific extensions. You can set as many multipliers as you want, separating them with a space. Use `--` to end the list if you want to specify other options after this."]
   ])
   .epilogue("Use shell aliases for shortcuts. For example:\n\n alias tp='trash-prune -kg 1'")
   .wrap(yargs.terminalWidth())
