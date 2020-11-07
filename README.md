@@ -1,8 +1,8 @@
 Your file trash might contain useful data. That's why you put some files in the trash rather than deleting them.
 
-When your file trash get big, you empty it, losing everything that's in it.
+When you empty your file trash because it gets big or bloated, you lose everything that's in it.
 
-This script helps you delete some of the files in the trash, according to their age, size and extension, and the requirements that you define (for example: keep only 2 GB of data).
+This script helps you delete some of the files in the trash according to their age, size, extension and the requirements that you define (for example: keep only 2 GB of data), so that you can reclaim disk space or have a cleaner trash without emptying it.
 
 # Install
 
@@ -38,7 +38,7 @@ Examples:
                                                       multipliers as you want, separating them with a space. Use `--` to end the
                                                       list if you want to specify other options after this.
 
-Go wild with your shell aliases! For example:
+Use shell aliases for shortcuts. For example:
 
  alias tp='trash-prune -kg 1'
 ```
