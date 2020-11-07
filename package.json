@@ -2,12 +2,12 @@
   "name": "@vibl/trash-prune",
   "version": "1.0.0",
   "description": "Smart file trash emptying for Linux",
-  "main": "index.js",
+  "main": "trash-prune.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "trash-prune": "./trash-prune.js"
+    "trash-prune": "trash-prune.js"
   },
   "repository": {
     "type": "git",
@@ -31,5 +31,6 @@
     "pretty-bytes": "^5.4.1",
     "prompts": "^2.4.0",
     "yargs": "^16.1.0"
-  }
+  },
+  "devDependencies": {}
 }
