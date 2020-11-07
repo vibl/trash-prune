@@ -61,7 +61,7 @@ const option = yargs(hideBin(process.argv))
       array: true,
       type: "string",
       default: ["0.1:js,ts,jsx,tsx,sh,rb,py,txt", "10:nfo,url,srt,avi,mp4,mkv,jpeg,jpg,png,bmp,zip,gzip,bzip,bzip2,tar,rar"],
-      description: "Rotting multiplier for specific extensions. Files are deleted as if they were N times bigger (or older). See example below.",
+      description: "Set rotting multiplier for specific extensions. Files are deleted as if they were N times bigger (or older). See example below.",
       coerce: (list) => {
         const res = {};
         for(const opt of list) {
