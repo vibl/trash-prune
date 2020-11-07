@@ -85,7 +85,7 @@ const option = yargs(hideBin(process.argv))
     }
   })
   .check((argv) => {
-    if( argv.number >= 0 && argv.gb >= 0 ) {
+    if( !(argv.number >= 0 && argv.gb >= 0) ) {
       throw new Error("Either `--number` or `--gb` should be specified. Aborting.");
     } else {
       return true
@@ -94,12 +94,17 @@ const option = yargs(hideBin(process.argv))
   .example([
     ["trash-prune -n 100", "Delete 100 files"],
     ["trash-prune -kg 1", "Keep 1 GB and delete the rest"],
-    ["trash-prune --rotMult 0.01:sh,txt 100:htm,html,log", "set rotting multiplier for specific extensions. You can set as many multipliers as you want, separating them with a space. Use `--` to end the list if you want to specify other options after this."]
+    ["trash-prune --rot 0.01:sh,txt 100:htm,html,log", "set rotting multiplier for specific extensions. You can set as many multipliers as you want, separating them with a space. Use `--` to end the list if you want to specify other options after this."]
   ])
   .epilogue("Go wild with your shell aliases! For example:\n\n alias tp='trash-prune -kg 1'")
   .wrap(yargs.terminalWidth())
   .argv;
 
+const table = new Table({
+    head: ["Type", "Name", "Last accessed", "Size", "Rot (log10)"], 
+    colAligns: ["left", "left", "right", "right", "right"],
+  });
+  
 const { trashDir } = option;
 
 function log(...args) {
@@ -115,10 +120,6 @@ function computeNull(n, i, list) {
   return n !== null ? n : yargs.terminalWidth() - _.sum(list) - list.length - 1;
 }
  
-const table = new Table({
-  head: ["Type", "Name", "Last accessed", "Size", "Rot (log10)"], 
-  colAligns: ["left", "left", "right", "right", "right"],
-});
 
 async function diskUsage (path) {
   const duRes = await exec("du", "-bs", path);
@@ -186,59 +187,67 @@ const main = async () => {
         console.error(err);
     }
   };
-  
-  const entryCount = names.length;
     
-  let deleteN = 0, deleteByte = 0;
+  let deleteTargetNum = 0, deleteTargetBytes = 0;
 
   if (option.number) {
-    const maxDelete = Math.min(option.number, entryCount);
-    deleteN = option.keep ? entryCount - maxDelete : maxDelete;
-    if (deleteN === 0) abort("No file/directory to delete.")
+    const targetNum = Math.min(option.number, entries.length);
+    deleteTargetNum = option.keep ? entries.length - targetNum : targetNum;
+    if (deleteTargetNum === 0) abort("No file/directory to delete.")
   }
   if (option.gb) {
-    const maxBytes =  option.gb * 2 ** 30;
-    const limit = [maxBytes, totalSize].min;
-    deleteByte = option.keep ? totalSize - limit : limit;
-    if (deleteByte === 0) abort("No file/directory to delete.")
+    const targetBytes = Math.min(option.gb * 2 ** 30, totalSize);
+    deleteTargetBytes = option.keep ? totalSize - targetBytes : targetBytes;
+    if (deleteTargetBytes === 0) abort("No file/directory to delete.")
   }
-
-  log(`Trash size: ${prettyBytes(totalSize)} in ${entryCount} files.`);
-
 
   const entriesSorted = _.sortBy(entries, entry => entry.rot).reverse();
   let deletedByte = 0;
-  let deletedNum = 0;
+  const count = {
+    entry: {
+      dir: 0,
+      file: 0,
+    },
+    deleted: {
+      dir: 0,
+      file: 0,
+    }
+  };
   const candidates = [];
   
   for (const entry of entriesSorted) {
-    if ((option.number && deletedNum >= deleteN) ?? (option.gb && deletedByte >= deleteByte)) {
-      break
-    };
-  
+    const type = entry.isDir ? "dir" : "file";
+    count.entry[type]++;
+
+    if( candidates.length >= deleteTargetNum || ( deletedByte + entry.size ) > deleteTargetBytes) {
+      continue;
+    }
+
     deletedByte += entry.size;
-    deletedNum++;
+    count.deleted[type]++;
     candidates.push(entry);
-  
+
     table.push([
-      entry.isDir ? "dir" : "file",
+      type,
       entry.name,
       formatDistanceToNow(entry.lastAccessed) + " ago",
       prettyBytes(entry.size),
       entry.rot.toPrecision(3),
     ]);
   };
-  
-  log("Ready to delete these files:");
+
+  log(`\nTotal trash size: ${prettyBytes(totalSize)} in ${count.deleted.file} files and ${count.deleted.dir} directories.\n`);
+
+  log("These files could be deleted to satisfy the requirements:");
   
   log(table.toString());
   
-  log(`TOTAL: ${prettyBytes(deletedByte)} in ${deletedNum} files/directories.`);
-  log(`(Keeping ${entryCount - deletedNum} files, ${prettyBytes(totalSize - deletedByte)})`);
+  log(`TOTAL: ${prettyBytes(deletedByte)} in ${count.deleted.file} files and ${count.deleted.dir} directories..\n`);
+  log(`(Keeping ${count.entry.file - count.deleted.file} files and ${count.entry.dir - count.deleted.dir} directories, ${prettyBytes(totalSize - deletedByte)})\n`);
   
   if (!(option.unattended || option.silent)) {
 
-    const confirmed = await prompts.confirm({message: "Delete these files?"});
+    const confirmed = await prompts.confirm({message: "Do you want to delete these files?"});
     if (!confirmed) abort("You chose to cancel.")
   }
 
@@ -248,5 +257,3 @@ const main = async () => {
 }
 
 main().then(log).catch(console.error);
-
-
