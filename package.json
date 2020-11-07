@@ -1,0 +1,35 @@
+{
+  "name": "@vibl/trash-prune",
+  "version": "1.0.0",
+  "description": "Smarter trash emptying for Linux",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "trash-prune": "./trash-prune.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vibl/trash-prune.git"
+  },
+  "keywords": [
+    "trash"
+  ],
+  "author": "Vianney Stroebel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vibl/trash-prune/issues"
+  },
+  "homepage": "https://github.com/vibl/trash-prune#readme",
+  "dependencies": {
+    "cli-table3": "^0.6.0",
+    "date-fns": "^2.16.1",
+    "execa": "^4.1.0",
+    "fs-extra": "^9.0.1",
+    "lodash": "^4.17.20",
+    "pretty-bytes": "^5.4.1",
+    "prompts": "^2.4.0",
+    "yargs": "^16.1.0"
+  }
+}
