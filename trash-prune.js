@@ -85,7 +85,7 @@ const option = yargs(hideBin(process.argv))
     }
   })
   .check((argv) => {
-    if( !(argv.number >= 0 && argv.gb >= 0) ) {
+    if( !(argv.number >= 0 || argv.gb >= 0) ) {
       throw new Error("Either `--number` or `--gb` should be specified. Aborting.");
     } else {
       return true
@@ -103,6 +103,7 @@ const option = yargs(hideBin(process.argv))
 const table = new Table({
     head: ["Type", "Name", "Last accessed", "Size", "Rot (log10)"], 
     colAligns: ["left", "left", "right", "right", "right"],
+    colWidths:[null, 150],
   });
   
 const { trashDir } = option;
@@ -119,7 +120,6 @@ function exec(command, ...args) {
 function computeNull(n, i, list) {
   return n !== null ? n : yargs.terminalWidth() - _.sum(list) - list.length - 1;
 }
- 
 
 async function diskUsage (path) {
   const duRes = await exec("du", "-bs", path);
@@ -188,7 +188,7 @@ const main = async () => {
     }
   };
     
-  let deleteTargetNum = 0, deleteTargetBytes = 0;
+  let deleteTargetNum = null, deleteTargetBytes = 0;
 
   if (option.number) {
     const targetNum = Math.min(option.number, entries.length);
@@ -218,11 +218,9 @@ const main = async () => {
   for (const entry of entriesSorted) {
     const type = entry.isDir ? "dir" : "file";
     count.entry[type]++;
-
-    if( candidates.length >= deleteTargetNum || ( deletedByte + entry.size ) > deleteTargetBytes) {
+    if (( deletedByte + entry.size ) > deleteTargetBytes) {
       continue;
     }
-
     deletedByte += entry.size;
     count.deleted[type]++;
     candidates.push(entry);
@@ -234,6 +232,9 @@ const main = async () => {
       prettyBytes(entry.size),
       entry.rot.toPrecision(3),
     ]);
+    if( deleteTargetNum && candidates.length >= deleteTargetNum ) {
+      break;
+    } 
   };
 
   log(`\nTotal trash size: ${prettyBytes(totalSize)} in ${count.deleted.file} files and ${count.deleted.dir} directories.\n`);
@@ -248,12 +249,12 @@ const main = async () => {
   if (!(option.unattended || option.silent)) {
 
     const confirmed = await prompts.confirm({message: "Do you want to delete these files?"});
-    if (!confirmed) abort("You chose to cancel.")
+    if (!confirmed) abort("\nYou chose to cancel.")
   }
 
   await Promise.all(candidates.map(deleteEntry));  
 
-  return `${deletedNum} files or directories deleted.`;
+  return `\n${count.deleted.file} files and ${count.deleted.dir} directories deleted.`;
 }
 
 main().then(log).catch(console.error);
